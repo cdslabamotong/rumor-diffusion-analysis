@@ -1,9 +1,0 @@
-.DS_Store
-.idea/
-tokens.py
-tokens_cds.py
-topics_ids.csv
-topics_time.csv
-total_topics_claims.csv
-.gitignore
-paper/
