@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 from email.utils import mktime_tz, parsedate_tz
 from nltk.sentiment.vader import SentimentIntensityAnalyzer 
 import statistics as s
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
 
 
 file_path = 'twitter_data/ids-2016-07/'
@@ -648,9 +650,53 @@ def date_range(date_list, N):
     date.append(end)
     return list(date)
     
+
+def get_training_vector_content(folder_name):
+    dataset, text_list, hashtags, sentiment = [], [], [], []
+    vectorizer = TfidfVectorizer(analyzer='word', stop_words='english', token_pattern='[A-Za-z][\w\-]*', max_df=0.25)
     
-def get_training_vector(folder_name):
-    dataset, date_list, user_list, tweet_list = [], [], [], []
+    for i in range(5):
+        dataset.append(load_json(folder_name + '{}.json'.format(i)))
+    
+    for i in range(len(dataset)):
+        temp = [datetime.strptime(i,"%Y-%m-%d %H:%M:%S") for i in list(dataset[i].created_at)]
+        temp_text = [remove_mentions_urls(i) for i in list(dataset[i].text)]
+        temp_hashtags = [i for i in list(dataset[i].entities)]
+        temp_hashtag = []
+        for i in temp_hashtags:
+            if i['hashtags']:
+                temp_hashtag.append(1)
+            else:
+                temp_hashtag.append(0)
+                
+        temp_sentiment = sentiment_score(temp_text)[3]
+        
+        time_interval = list(date_range(temp, 10))
+        hashtag_element = []; sentiment_element = []
+        
+        for i in range(len(time_interval) - 1):
+            temp_temp_hashtag, temp_temp_sentiment = [], []
+            for j, x in enumerate(temp):
+                if time_in_range(time_interval[i], time_interval[i+1], x):
+                    temp_temp_hashtag.append(temp_hashtag[j])
+                    temp_temp_sentiment.append(temp_sentiment[j])
+                    
+            hashtag_element.append(sum(temp_temp_hashtag))
+            sentiment_element.append(np.mean(temp_temp_sentiment))
+        
+        temp_text_prime = vectorizer.fit_transform(temp_text)
+        temp_text_prime = [np.argsort(temp_text_prime[i: i+100, :].toarray(), axis=1)[:, :20]
+          for i in range(0, temp_text_prime.shape[0], 100)]
+        
+        text_list.append(temp_text_prime[0])
+        hashtags.append(hashtag_element)
+        sentiment.append(pd.Series(sentiment_element, dtype=object).fillna(0).tolist())
+                
+    return text_list, hashtags, sentiment
+
+
+def get_training_vector_temp(folder_name):
+    dataset, date_list, user_list, tweet_list, time_list = [], [], [], [], []
     
     for i in range(5):
         dataset.append(load_json(folder_name + '{}.json'.format(i)))
@@ -662,7 +708,7 @@ def get_training_vector(folder_name):
         
         time_interval = list(date_range(temp, 10))
         
-        date_list_element = []; date_list_element_user = []; date_list_element_tweet = []
+        date_list_element, date_list_element_user, date_list_element_tweet = [], [], []
         
         for i in range(len(time_interval) - 1):
             temp_temp, temp_temp_user, temp_temp_tweet = [], [], []
@@ -679,9 +725,93 @@ def get_training_vector(folder_name):
         date_list.append(date_list_element)
         user_list.append(date_list_element_user)
         tweet_list.append(date_list_element_tweet)
+        time_list.append(element_wise_subtraction(date_list_element))
         
-    return date_list, user_list, tweet_list
+    return date_list, user_list, tweet_list, time_list
 
+
+def get_training_vector_user(folder_name):
+    dataset, friends_list, verified_list, likes_list = [], [], [], []
+    
+    for i in range(5):
+        dataset.append(load_json(folder_name + '{}.json'.format(i)))
+    
+    for i in range(len(dataset)):
+        temp = [datetime.strptime(i,"%Y-%m-%d %H:%M:%S") for i in list(dataset[i].created_at)]
+        users_feature = [i for i in list(dataset[i].user)]
+        
+        temp_friends = [i['friends_count'] for i in users_feature]
+        temp_verified = [int(i['verified']) for i in users_feature]
+        temp_likes = list(dataset[i].favorite_count)
+        
+        time_interval = list(date_range(temp, 10))
+        
+        date_list_element_friend, date_list_element_verified, date_list_element_likes = [], [], []
+        
+        for i in range(len(time_interval) - 1):
+            temp_temp_friends, temp_temp_verified, temp_temp_likes = [], [], []
+            for j, x in enumerate(temp):
+                if time_in_range(time_interval[i], time_interval[i+1], x):
+                    temp_temp_friends.append(temp_friends[j])
+                    temp_temp_verified.append(temp_verified[j])
+                    temp_temp_likes.append(temp_likes[j])
+                    
+            date_list_element_friend.append(temp_temp_friends)
+            date_list_element_verified.append(temp_temp_verified)
+            date_list_element_likes.append(temp_temp_likes)
+            
+        friends_list.append(date_list_element_friend)
+        verified_list.append(date_list_element_verified)
+        likes_list.append(date_list_element_likes)
+        
+    return friends_list, verified_list, likes_list
+
+
+
+def get_training_vector_structure(folder_name):
+    dataset, users_list, followers_list, virality_list = [], [], [], []
+    
+    for i in range(5):
+        dataset.append(load_json(folder_name + '{}.json'.format(i)))
+    
+    for i in range(len(dataset)):
+        temp = [datetime.strptime(i,"%Y-%m-%d %H:%M:%S") for i in list(dataset[i].created_at)]
+        
+        time_interval = list(date_range(temp, 10))
+        
+        for j in range(len(time_interval) - 1):
+            dataframes = []
+            
+            for j, x in enumerate(temp):
+                if time_in_range(time_interval[i], time_interval[i+1], x):
+                    dataframes.append(dataset[i].iloc[j])
+            
+            dataframes = pd.DataFrame(dataframes)
+            number_cascades = number_of_cascades(dataframes, [])
+         
+             
+        users_list.append(number_cascades.users)
+        followers_list.append(number_cascades.users['friends_count'])
+        virality_list.append(1/(len(number_cascades.users))(len(number_cascades.users)-1) * max(number_cascades))
+        
+    return users_list, followers_list, virality_list
+
+
+def element_wise_subtraction(lists):
+    return_list = []
+    
+    for alist in lists:
+        ttt = []
+        if not alist:
+            return_list.append(0)
+        else:
+            for j in range(len(alist)-1):
+                ttt.append((alist[j+1] - alist[j])/timedelta(days=1))
+                
+            return_list.append(np.mean(ttt))
+            
+    return return_list
+    
 
 def number_of_retweets(dataset):
     counter = 0
@@ -698,9 +828,6 @@ def number_of_retweets(dataset):
     
     
     return counter, users
-        #temp_user = [i['id_str'] for i in list(dataset[i].user)]
-        #temp_tweet = list(dataset[i].id_str)
-    #return users
 
 
 def sentiment_score(sentence_list):
@@ -801,25 +928,28 @@ def sentiment_figure(filename, snope_time):
         pos.append(s.mean(temp_C))
         compound.append(s.mean(temp_D))
     
+    
     plt.plot(list(range(len(neg))), neg, 'g:', linewidth=2.4, label='neg')
     plt.plot(list(range(len(neu))), neu, 'm-.', label='neu')
     plt.plot(list(range(len(pos))), pos, 'b:', linewidth=2.4, label='pos')
-    plt.axvline(x=14, c='r', linewidth=3, label='Snopes time') 
+    plt.axvline(x=11, c='r', linewidth=3, label='Snopes time') 
     plt.legend(loc=6, fontsize=11)
     plt.xlabel('Time Interval', fontsize=15)
     plt.ylabel('Average Sentiment Score', fontsize=15)
     plt.grid(True)
-    plt.savefig('paper/figures/figure_8A.png', dpi=600)
+    plt.tight_layout()
+    plt.savefig('paper/figures/test1.png', dpi=600)
     plt.show()
       
     plt.plot(list(range(len(compound))), compound, 'g-.', label='compound')
     plt.axis([None, None, -1, 1])
-    plt.axvline(x=14, c='r', linewidth=3, label='Snopes time') 
+    plt.axvline(x=11, c='r', linewidth=3, label='Snopes time') 
     plt.axhline(y=0, c='black') 
     plt.legend(loc='upper left', fontsize=11)
     plt.xlabel('Time Interval', fontsize=15)
     plt.ylabel('Average Sentiment Score', fontsize=15)
     plt.grid(True)
-    plt.savefig('paper/figures/figure_8B.png', dpi=600)
+    plt.tight_layout()
+    plt.savefig('paper/figures/test.png', dpi=600)
     plt.show()
 
