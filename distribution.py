@@ -137,14 +137,3 @@ plt.grid(True)
 plt.xlabel('Evolution Time', fontsize=20)
 plt.savefig('paper/figures/figure_6.png', dpi=500)
 plt.show()
-
-
-'''Category Distribution Graph'''
-
-
-
-
-
-
-
-
