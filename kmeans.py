@@ -15,15 +15,39 @@ from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
+from sklearn.metrics import accuracy_score
 
 
+"""
+Content Feature
+"""
+X, y = [], []
+hashtag_X = []; sentiment_X = []
+
+for i in range(74):
+    content, hashtags, sentiments = dh.get_training_vector_content('dataset_1/{}/'.format(i))
+    
+    for i in range(len(content)):
+        X.append([j for j in content[i]])
+        hashtag_X.append([j for j in hashtags[i]])
+        sentiment_X.append([j for j in sentiments[i]])
+        if i == 1:
+            y.append(1)
+        else:
+            y.append(0)
+            
+
+
+"""
+Temp Features
+"""
 X, y = [], []
 user_X = []; user_list = []
 
 for i in range(74):
-    temp, temp_user, temp_tweet = dh.get_training_vector('dataset_1/{}/'.format(i))
+    temp, temp_user, temp_tweet, temp_446 = dh.get_training_vector_temp('dataset_1/{}/'.format(i))
     
     for i in range(len(temp)):
         X.append([len(j) for j in temp[i]])
@@ -54,11 +78,53 @@ for i in X:
     tweet_X.append(temppp)    
 
 
-X = Normalizer().fit_transform(X) # fit does nothing.
-tweet_X = Normalizer().fit_transform(tweet_X) # fit does nothing.
-user_X = Normalizer().fit_transform(user_X) # fit does nothing.
+X = Normalizer().fit_transform(X) 
+tweet_X = Normalizer().fit_transform(tweet_X)
+user_X = Normalizer().fit_transform(user_X)
 
 
+"""
+User Features
+"""
+friends_X, y = [], []
+verified_X = []; likes_X = []
+
+for i in range(74):
+    friends, verify, like = dh.get_training_vector_user('dataset_1/{}/'.format(i))
+    
+    for i in range(len(friends)):
+        friends_X.append([j for j in friends[i]])
+        verified_X.append([j for j in verify[i]])
+        likes_X.append([j for j in like[i]])
+        if i == 1:
+            y.append(1)
+        else:
+            y.append(0)
+            
+            
+"""
+Structure Features
+"""
+      
+cas_user_X, y = [], []
+cas_follower_X = []; cas_virality_X = []
+
+for i in range(74):
+    cas_user, cas_follower, cas_virality = dh.get_training_vector_structure('dataset_1/{}/'.format(i))
+    
+    for i in range(len(content)):
+        cas_user_X.append([j for j in cas_user[i]])
+        cas_follower.append([j for j in cas_follower[i]])
+        cas_virality.append([j for j in cas_virality[i]])
+        if i == 1:
+            y.append(1)
+        else:
+            y.append(0)
+
+
+"""
+Training Step
+"""
 
 training_list = []
 for i in range(len(X)):
@@ -136,5 +202,3 @@ print('Classifier\'s Accuracy for Logistic Regression: %0.5f\n' % accuracy_score
 print('Classifier\'s Accuracy for LDA: %0.5f\n' % accuracy_score(y_test, y_pred_lda))
 
 print('Classifier\'s Accuracy for kNN: %0.5f\n' % accuracy_score(y_test, y_pred_knn))
-
-
