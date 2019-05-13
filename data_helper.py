@@ -793,8 +793,8 @@ def get_training_vector_structure(folder_name):
         flatten_list = [item for sublist in number_cascades for item in sublist]
         users_list.append(len(flatten_list))
         for i in flatten_list:
-            if i in [x['id'] for i,x in list(dataset.user)]:
-                temp += list(dataset.user)[i]['friends_count']
+            if i in [x['id'] for i,x in list(dataframes.user)]:
+                temp += list(dataframes.user)[i]['friends_count']
         followers_list.append(temp)
         virality_list.append(1/(len(number_cascades.users))(str(number_cascades).count(",")) * max([len(i) for i in number_cascades]))
         
