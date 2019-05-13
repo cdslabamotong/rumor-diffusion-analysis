@@ -790,9 +790,9 @@ def get_training_vector_structure(folder_name):
             number_cascades = number_of_cascades(dataframes, [])
          
              
-        users_list.append(number_cascades.users)
-        followers_list.append(number_cascades.users['friends_count'])
-        virality_list.append(1/(len(number_cascades.users))(len(number_cascades.users)-1) * max(number_cascades))
+        users_list.append(str(number_cascades).count(",")+1)
+        followers_list.append(len(number_cascades.users['friends_count']))
+        virality_list.append(1/(len(number_cascades.users))(str(number_cascades).count(",")) * max([len(i) for i in cascades_list]))
         
     return users_list, followers_list, virality_list
 
