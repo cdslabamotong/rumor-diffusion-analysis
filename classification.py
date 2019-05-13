@@ -15,7 +15,6 @@ from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.metrics import accuracy_score
 
@@ -180,11 +179,10 @@ clf_svm = LinearSVC(random_state=0, tol=1e-5).fit(x_train, y_train)
 clf_lda = LinearDiscriminantAnalysis().fit(x_train, y_train)
 neigh = KNeighborsClassifier(n_neighbors=3).fit(x_train, y_train)
 
-'''
-kmeans = MiniBatchKMeans(n_clusters=2, random_state=0, batch_size=6, max_iter=8).fit_predict(training_set)
+
+kmeans = KMeans(n_clusters=2, random_state=0, batch_size=6, max_iter=8).fit_predict(training_set)
 agg_clustering = AgglomerativeClustering().fit_predict(training_set)
 sc = SpectralClustering(n_clusters=2, assign_labels="discretize", random_state=0).fit_predict(training_set)
-'''
 
 
 y_pred_lr = clf_lr.predict(x_test)
