@@ -21,6 +21,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import statistics as s
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+from compiler.ast import flatten
 
 
 file_path = 'twitter_data/ids-2016-07/'
@@ -788,11 +789,14 @@ def get_training_vector_structure(folder_name):
             
             dataframes = pd.DataFrame(dataframes)
             number_cascades = number_of_cascades(dataframes, [])
-         
-             
-        users_list.append(str(number_cascades).count(",")+1)
-        followers_list.append(len(number_cascades.users['friends_count']))
-        virality_list.append(1/(len(number_cascades.users))(str(number_cascades).count(",")) * max([len(i) for i in cascades_list]))
+            
+        flatten_list = [item for sublist in number_cascades for item in sublist]
+        users_list.append(len(flatten_list))
+        for i in flatten_list:
+            if i in [x['id'] for i,x in list(dataset.user)]:
+                temp += list(dataset.user)[i]['friends_count']
+        followers_list.append(temp)
+        virality_list.append(1/(len(number_cascades.users))(str(number_cascades).count(",")) * max([len(i) for i in number_cascades]))
         
     return users_list, followers_list, virality_list
 
