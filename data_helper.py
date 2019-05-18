@@ -770,37 +770,6 @@ def get_training_vector_user(folder_name):
 
 def get_training_vector_structure(folder_name):
     dataset, users_list, followers_list, virality_list = [], [], [], []
-    '''
-    for i in range(5):
-        dataset.append(load_json(folder_name + '{}.json'.format(i)))
-    
-    for i in range(len(dataset)):
-        temp = [datetime.strptime(i,"%Y-%m-%d %H:%M:%S") for i in list(dataset[i].created_at)]
-        
-        time_interval = list(date_range(temp, 10))
-        
-        for j in range(len(time_interval) - 1):
-            dataframes = []
-            
-            for j, x in enumerate(temp):
-                if time_in_range(time_interval[i], time_interval[i+1], x):
-                    dataframes.append(dataset[i].iloc[j])
-            
-            dataframes = pd.DataFrame(dataframes)
-            number_cascades = number_of_cascades(dataframes, [])
-            
-            
-        flatten_list = [item for sublist in number_cascades for item in sublist]
-        users_list.append(len(flatten_list))
-        
-        counter = 0
-        for i in flatten_list:
-            if i in [x['id'] for i,x in enumerate(list(dataframes.user))]:
-                counter += list(dataframes.user)[i]['friends_count']
-        followers_list.append(counter)
-        d = str(number_cascades).count(",")+1
-        virality_list.append(1/(d*(d-1)) * max([len(i) for i in number_cascades]))
-    '''
     
     for i in range(5):
         dataset.append(load_json(folder_name + '{}.json'.format(i)))
